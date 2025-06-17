@@ -1,20 +1,68 @@
 "use client"
+
 import type React from "react"
 import type { Editor } from "@tiptap/react"
-import {Bold,Italic,Strikethrough,Code, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, 
-  Quote, Minus, Heading1, Heading2, Heading3, Undo, Redo, LinkIcon, ImageIcon, Video, Table, Plus, Trash2, 
-  Highlighter, Subscript, Superscript, ListIcon, ChevronDown, FileText, RefreshCw,Unlink, ALargeSmall} from "lucide-react"
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Code,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Quote,
+  Minus,
+  Heading1,
+  Heading2,
+  Heading3,
+  Undo,
+  Redo,
+  LinkIcon,
+  ImageIcon,
+  Video,
+  Table,
+  Plus,
+  Trash2,
+  Highlighter,
+  Subscript,
+  Superscript,
+  ListIcon,
+  ChevronDown,
+  FileText,
+  RefreshCw,
+  Unlink,
+  ALargeSmall,
+  Link2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState, useEffect } from "react"
 import ColorPicker from "./color-picker"
-// import DragDropUpload from "./drag-drop-upload"
+import DragDropUpload from "../s3/drag-and-drop"
 
 interface EditorToolbarProps {
   editor: Editor
@@ -25,19 +73,21 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
   const [imageDialog, setImageDialog] = useState(false)
   const [youtubeDialog, setYoutubeDialog] = useState(false)
 
-  // Link form state
+  // states for Link
   const [linkUrl, setLinkUrl] = useState("")
   const [linkText, setLinkText] = useState("")
   const [linkTarget, setLinkTarget] = useState(false)
   const [linkNofollow, setLinkNofollow] = useState(false)
   const [isEditingLink, setIsEditingLink] = useState(false)
 
-  // YouTube form state
+  // states for YouTube 
   const [youtubeUrl, setYoutubeUrl] = useState("")
 
-  // Image upload state
+  // states for Image
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [imageUrl, setImageUrl] = useState("")
+  const [imageAlt, setImageAlt] = useState("")
 
   // Check if cursor is on a link and populate form
   useEffect(() => {
@@ -66,23 +116,19 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
       if (linkNofollow) attributes.rel = "nofollow"
 
       if (isEditingLink) {
-        // Update existing link
         editor.chain().focus().setLink(attributes).run()
       } else if (linkText) {
-        // Insert new link with text
         editor
           .chain()
           .focus()
           .insertContent(
-            `<a href="${linkUrl}"${linkTarget ? ' target="_blank"' : ""}${linkNofollow ? ' rel="nofollow"' : ""}>${linkText}</a>`,
+            `<a href="${linkUrl}"${linkTarget ? ' target="_blank"' : ""}${linkNofollow ? ' rel="nofollow"' : ""}>${linkText}</a> `,
           )
           .run()
       } else {
-        // Apply link to selected text
         editor.chain().focus().setLink(attributes).run()
       }
 
-      // Reset form
       setLinkUrl("")
       setLinkText("")
       setLinkTarget(false)
@@ -104,7 +150,6 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         src: youtubeUrl,
         width: 640,
         height: 480,
-        
       })
       setYoutubeUrl("")
       setYoutubeDialog(false)
@@ -115,37 +160,98 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
   }
 
-  // Placeholder functions for image upload - user will implement these
-  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
-    if (files && files.length > 0) {
-      setUploading(true)
-      // User will implement upload logic here
-      console.log("Files to upload:", files)
+    if (!files || files.length === 0) return
 
-      // Mock upload completion
-      setTimeout(() => {
-        setUploading(false)
-        // Mock image URL - user will replace with actual uploaded image URL
-        const mockImageUrl = `/placeholder.svg?height=300&width=400`
-        editor.chain().focus().setImage({ src: mockImageUrl }).run()
-        setImageDialog(false)
-      }, 2000)
+    setUploading(true)
+
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append("file", file)
+
+        const response = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData,
+        })
+        const data = await response.json()
+
+        const img_url = process.env.NEXT_PUBLIC_R2_URL + '/' + data.key
+
+        // Insert image with style attributes
+        const styleString =
+          "max-width: 100%; border-radius: 0.5rem; margin: 0.5rem auto; display: block; cursor: pointer;"
+
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "customImage",
+            attrs: {
+              src: img_url,
+              alt: file.name,
+              style: styleString,
+              class: "max-w-full h-auto rounded-lg my-2 mx-auto block cursor-pointer",
+            },
+          })
+          .run()
+
+     
+      }
+
+      setImageDialog(false)
+    } catch (error) {
+      console.error("Upload failed:", error)
+    } finally {
+      setUploading(false)
+      event.target.value = ""
     }
   }
 
-  const onUploadComplete = (files: any) => {
-    // User will implement this function
-    console.log("Upload completed:", files)
-    // Mock image insertion
-    const mockImageUrl = `/placeholder.svg?height=300&width=400`
-    editor.chain().focus().setImage({ src: mockImageUrl }).run()
+  const HandleOnUploadComplete = (data: any) => {
+    const mockImageUrl = process.env.NEXT_PUBLIC_R2_URL + '/' + data.key
+    const styleString = "max-width: 100%; border-radius: 0.5rem; margin: 0.5rem auto; display: block; cursor: pointer;"
+
+    // Insert image with style
+    editor
+      .chain().focus().insertContent({
+        type: "customImage",
+        attrs: {
+          src: mockImageUrl,
+          alt: "Uploaded image",
+          style: styleString,
+          class: "max-w-full h-auto rounded-lg my-2 mx-auto block cursor-pointer",
+        },
+      })
+      .run()
+
+    setImageDialog(false)
+  }
+
+  const insertImageFromUrl = () => {
+    if (!imageUrl) return
+
+    const styleString = "max-width: 100%; border-radius: 0.5rem; margin: 0.5rem auto; display: block; cursor: pointer;"
+
+    editor.chain().focus().insertContent({
+        type: "customImage",
+        attrs: {
+          src: imageUrl,
+          alt: imageAlt || "Image",
+          style: styleString,
+          class: "max-w-full h-auto rounded-lg my-2 mx-auto block cursor-pointer",
+        },
+      })
+      .run()
+
+    setImageUrl("")
+    setImageAlt("")
     setImageDialog(false)
   }
 
   const fetchFiles = () => {
     setLoading(true)
-    // User will implement this function
     console.log("Fetching files...")
     setTimeout(() => setLoading(false), 1000)
   }
@@ -276,8 +382,6 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         <Code className="w-4 h-4" />
       </Button>
 
-     
-
       {/* Colors */}
       <ColorPicker editor={editor} />
 
@@ -296,7 +400,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             ) : (
               <AlignLeft className="w-4 h-4" />
             )}
-            <ChevronDown className="w-2 h-2 -ml-1 " />
+            <ChevronDown className="w-2 h-2 -ml-1" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -331,14 +435,14 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-       <Separator orientation="vertical" className="h-6 mx-1" />
+      <Separator orientation="vertical" className="h-6 mx-1" />
 
       {/* Lists Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-10 p-0 shrink-0" title="Lists">
             <ListIcon className="w-4 h-4" />
-            <ChevronDown className="w-2 h-2 -ml-1 " />
+            <ChevronDown className="w-2 h-2 -ml-1" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -358,8 +462,8 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      
-       <Separator orientation="vertical" className="h-6 mx-1" />
+
+      <Separator orientation="vertical" className="h-6 mx-1" />
 
       <Button
         variant="ghost"
@@ -371,25 +475,22 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         <Quote className="w-4 h-4" />
       </Button>
 
-
-         <Button
+      <Button
         variant="ghost"
         size="sm"
-       onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        className={`h-8 w-8 p-0 shrink-0 ${editor.isActive("blockquote") ? "bg-gray-200" : ""}`}
-        title="Blockquote"
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        className="h-8 w-8 p-0 shrink-0"
+        title="Horizontal Rule"
       >
-         <Minus className="w-4 h-4 mr-2" />
+        <Minus className="w-4 h-4" />
       </Button>
-
-     
 
       {/* Format Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-10 p-0 shrink-0" title="More Formatting">
             <ALargeSmall className="w-4 h-6" />
-            <ChevronDown className="w-2 h-2 -ml-1 " />
+            <ChevronDown className="w-2 h-2 -ml-1" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -414,7 +515,6 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             <Superscript className="w-4 h-4 mr-2" />
             Superscript
           </DropdownMenuItem>
-          
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -508,35 +608,72 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Insert Image</DialogTitle>
-            <DialogDescription>Upload an image to insert into your content.</DialogDescription>
+            <DialogDescription>Upload an image or insert from URL.</DialogDescription>
           </DialogHeader>
-          <Card>
-            <CardContent className="space-y-4 pt-6">
-              <div className="space-y-4">
-                {/* <DragDropUpload onUploadComplete={onUploadComplete} /> */}
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Label htmlFor="file-upload">Or upload manually</Label>
-                    <Input
-                      id="file-upload"
-                      type="file"
-                      onChange={handleUpload}
-                      disabled={uploading}
-                      className="mt-1"
-                      multiple
-                      accept="image/*"
-                    />
-                  </div>
-                  <Button onClick={() => fetchFiles()} disabled={loading} variant="outline" size="sm">
-                    <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                    Refresh
-                  </Button>
-                </div>
 
-                {uploading && <div className="text-sm text-muted-foreground">Uploading file...</div>}
+          <Tabs defaultValue="upload">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload</TabsTrigger>
+              <TabsTrigger value="url">URL</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="upload" className="space-y-4 mt-4">
+              <Card>
+                <CardContent className="space-y-4 pt-6">
+                  <div className="space-y-4">
+                    <DragDropUpload onUploadComplete={HandleOnUploadComplete} />
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <Label htmlFor="file-upload">Or upload manually</Label>
+                        <Input
+                          id="file-upload"
+                          type="file"
+                          onChange={handleUpload}
+                          disabled={uploading}
+                          className="mt-1"
+                          multiple
+                          accept="image/*"
+                        />
+                      </div>
+                      <Button onClick={() => fetchFiles()} disabled={loading} variant="outline" size="sm">
+                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                        Refresh
+                      </Button>
+                    </div>
+
+                    {uploading && <div className="text-sm text-muted-foreground">Uploading file...</div>}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="url" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="image-url">Image URL *</Label>
+                  <Input
+                    id="image-url"
+                    placeholder="https://example.com/image.jpg"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="image-alt">Alt Text (for accessibility)</Label>
+                  <Input
+                    id="image-alt"
+                    placeholder="Describe this image"
+                    value={imageAlt}
+                    onChange={(e) => setImageAlt(e.target.value)}
+                  />
+                </div>
+                <Button onClick={insertImageFromUrl} disabled={!imageUrl} className="w-full">
+                  <Link2 className="w-4 h-4 mr-2" />
+                  Insert Image from URL
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 

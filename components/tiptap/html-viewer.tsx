@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea"
 interface HtmlViewerProps {
   content: string
 }
+const formatHtml = (html: string) => {
+  return html.replace(/></g, ">\n<").replace(/^\s*\n/gm, "")
+}
 
 const HtmlViewer = ({ content }: HtmlViewerProps) => {
   const [copied, setCopied] = useState(false)
@@ -20,11 +23,6 @@ const HtmlViewer = ({ content }: HtmlViewerProps) => {
     } catch (err) {
       console.error("Failed to copy text: ", err)
     }
-  }
-
-  const formatHtml = (html: string) => {
-    // Simple HTML formatting for better readability
-    return html.replace(/></g, ">\n<").replace(/^\s*\n/gm, "")
   }
 
   return (

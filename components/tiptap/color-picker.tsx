@@ -74,15 +74,12 @@ const ColorPicker = ({ editor }: ColorPickerProps) => {
   const applyTextColor = (color: string) => {
     editor.chain().focus().setColor(color).run()
   }
-
   const applyBackgroundColor = (color: string) => {
     editor.chain().focus().setHighlight({ color }).run()
   }
-
   const removeTextColor = () => {
     editor.chain().focus().unsetColor().run()
   }
-
   const removeBackgroundColor = () => {
     editor.chain().focus().unsetHighlight().run()
   }

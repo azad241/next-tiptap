@@ -1,7 +1,7 @@
 "use client"
+
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
-
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Paragraph from "@tiptap/extension-paragraph"
@@ -16,15 +16,14 @@ import TableRow from "@tiptap/extension-table-row"
 import TableHeader from "@tiptap/extension-table-header"
 import TableCell from "@tiptap/extension-table-cell"
 import Link from "@tiptap/extension-link"
-import Image from "@tiptap/extension-image"
 import Blockquote from "@tiptap/extension-blockquote"
 import Youtube from "@tiptap/extension-youtube"
 
+import { CustomImage } from "./custom-image"
 import EditorToolbar from "./editor-toolbar"
 import EditorFooter from "./editor-footer"
 import HtmlViewer from "./html-viewer"
-
-
+import ImageSizeDialog from "./image-size-dialog"
 
 interface TiptapProps {
   content?: string
@@ -32,22 +31,16 @@ interface TiptapProps {
   placeholder?: string
   className?: string
 }
+const content = "<h1>Welcome to Tiptap Editor</h1>";
 
-const Tiptap = ({
-  content = "<h1>Welcome to Tiptap Editor</h1><p>This rich text editor includes all the features you need for professional content creation. Try editing this content directly!</p><h2>Key Features</h2><ul><li><strong>Rich formatting</strong> with <em>multiple</em> <mark>text styles</mark></li><li>Beautiful <span style='color: #3b82f6'>colored text</span> and <span style='background-color: #fef3c7'>background colors</span></li><li>Professional tables, lists, and media embedding</li></ul><blockquote><p>\"The best editor for modern web applications\" - Start editing and explore all features!</p></blockquote><p>Try the toolbar dropdowns above for organized access to all formatting options.</p>",
-  onChange,
-  placeholder = "Start writing...",
-  className = "",
-}: TiptapProps) => {
-  const [showHtmlViewer, setShowHtmlViewer] = useState(false)
 
+export default function Tiptap({ content, onChange, placeholder = "Start writing...", className, }: TiptapProps) {
+  const [showHtmlViewer, setShowHtmlViewer] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         bulletList: {
-          HTMLAttributes: {
-            class: "list-disc list-outside ml-6 my-2",
-          },
+          HTMLAttributes: { class: "list-disc list-outside ml-6 my-2" },
         },
         orderedList: {
           HTMLAttributes: {
@@ -59,7 +52,7 @@ const Tiptap = ({
             class: "font-bold my-1",
           },
         },
-        blockquote: false, // We'll use the dedicated extension
+        blockquote: false,
       }),
       Paragraph.configure({
         HTMLAttributes: {
@@ -82,7 +75,7 @@ const Tiptap = ({
       Table.configure({
         resizable: true,
         HTMLAttributes: {
-          class: "border-collapse border border-gray-300 my-4",
+          class: "border-collapse border border-gray-300 my-4 mx-auto",
         },
       }),
       TableRow,
@@ -97,15 +90,18 @@ const Tiptap = ({
         },
       }),
       Link.configure({
-        openOnClick: true,
+        openOnClick: false,
         HTMLAttributes: {
           class: "text-blue-600 underline cursor-pointer",
         },
       }),
-      Image.configure({
+      // Use CustomImage instead of regular Image
+      CustomImage.configure({
         HTMLAttributes: {
-          class: "max-w-full h-auto rounded-lg my-2",
+          class: "max-w-full h-auto rounded-lg my-2 mx-auto block cursor-pointer",
         },
+        allowBase64: true,
+        inline: false,
       }),
       Blockquote.configure({
         HTMLAttributes: {
@@ -116,22 +112,39 @@ const Tiptap = ({
         width: 640,
         height: 480,
         HTMLAttributes: {
-          class: "my-4 rounded-lg mx-auto w-[98%] h-[220px] md:w-auto md:h-auto",
+          class: "my-4 rounded-lg mx-auto w-[98%] h-[220px] md:w-[640px] md:h-[480px]",
         },
       }),
     ],
     content,
     editorProps: {
       attributes: {
-        class:
-          "min-h-[300px] max-h-[500px] overflow-y-auto p-4 focus:outline-none prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto",
+        class: "min-h-[300px] max-h-[500px] overflow-y-auto p-4 focus:outline-none prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto relative",
         placeholder,
+      },
+      //remove link selectio after typing space or any char
+      handleKeyDown: (view, event) => {
+        const { state, dispatch } = view
+        const { selection } = state
+
+        if (event.key === " " || (event.key.length === 1 && !event.ctrlKey && !event.metaKey)) {
+          const $pos = selection.$from
+          const linkMark = $pos.marks().find((mark) => mark.type.name === "link")
+
+          if (linkMark && $pos.parentOffset === $pos.parent.content.size) {
+            const tr = state.tr //transition
+            tr.removeStoredMark(linkMark.type)
+            dispatch(tr)
+          }
+        }
+
+        return false
       },
     },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       onChange?.(html)
-      // console.log(html)
+      // console.log("HTML:", html)
     },
   })
 
@@ -155,13 +168,16 @@ const Tiptap = ({
           <EditorToolbar editor={editor} />
         </div>
 
-        <div className="relative bg-white">
+        <div className="relative bg-white overflow-visible">
           {showHtmlViewer ? (
             <div className="min-h-[300px] p-4">
               <HtmlViewer content={editor.getHTML()} />
             </div>
           ) : (
-            <EditorContent editor={editor} className="min-h-[300px]" />
+            <div className="relative">
+              <EditorContent editor={editor} className="min-h-[300px]" />
+              <ImageSizeDialog editor={editor} />
+            </div>
           )}
         </div>
 
@@ -176,5 +192,3 @@ const Tiptap = ({
     </div>
   )
 }
-
-export default Tiptap
