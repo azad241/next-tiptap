@@ -63,6 +63,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState, useEffect } from "react"
 import ColorPicker from "./color-picker"
 import DragDropUpload from "../s3/drag-and-drop"
+import CompactImageGallery from "../s3/compact-image-gallery"
 
 interface EditorToolbarProps {
   editor: Editor
@@ -160,57 +161,12 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
   }
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
 
-    setUploading(true)
-
-    try {
-      for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append("file", file)
-
-        const response = await fetch("/api/files/upload", {
-          method: "POST",
-          body: formData,
-        })
-        const data = await response.json()
-
-        const img_url = process.env.NEXT_PUBLIC_R2_URL + '/' + data.key
-
-        // Insert image with style attributes
-        const styleString =
-          "max-width: 100%; border-radius: 0.5rem; margin: 0.5rem auto; display: block; cursor: pointer;"
-
-        editor
-          .chain()
-          .focus()
-          .insertContent({
-            type: "customImage",
-            attrs: {
-              src: img_url,
-              alt: file.name,
-              style: styleString,
-              class: "max-w-full h-auto rounded-lg my-2 mx-auto block cursor-pointer",
-            },
-          })
-          .run()
-
-     
-      }
-
-      setImageDialog(false)
-    } catch (error) {
-      console.error("Upload failed:", error)
-    } finally {
-      setUploading(false)
-      event.target.value = ""
-    }
-  }
 
   const HandleOnUploadComplete = (data: any) => {
-    const mockImageUrl = process.env.NEXT_PUBLIC_R2_URL + '/' + data.key
+    console.log("data", data)
+    if (data?.Key) data.key = data.Key
+    const mockImageUrl = process.env.NEXT_PUBLIC_R2_URL + '/' + data.key 
     const styleString = "max-width: 100%; border-radius: 0.5rem; margin: 0.5rem auto; display: block; cursor: pointer;"
 
     // Insert image with style
@@ -228,6 +184,11 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
 
     setImageDialog(false)
   }
+
+  const handleImageFromGallery = (file: any) => {
+    HandleOnUploadComplete(file)
+  }
+
 
   const insertImageFromUrl = () => {
     if (!imageUrl) return
@@ -605,76 +566,62 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             <ImageIcon className="w-4 h-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Insert Image</DialogTitle>
-            <DialogDescription>Upload an image or insert from URL.</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle>Insert Image</DialogTitle>
+          <DialogDescription>Upload an image, select from media library, or insert from URL.</DialogDescription>
+        </DialogHeader>
 
-          <Tabs defaultValue="upload">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload">Upload</TabsTrigger>
-              <TabsTrigger value="url">URL</TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="upload">Upload</TabsTrigger>
+            <TabsTrigger value="media">Media Library</TabsTrigger>
+            <TabsTrigger value="url">URL</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="upload" className="space-y-4 mt-4">
-              <Card>
-                <CardContent className="space-y-4 pt-6">
-                  <div className="space-y-4">
-                    <DragDropUpload onUploadComplete={HandleOnUploadComplete} />
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <Label htmlFor="file-upload">Or upload manually</Label>
-                        <Input
-                          id="file-upload"
-                          type="file"
-                          onChange={handleUpload}
-                          disabled={uploading}
-                          className="mt-1"
-                          multiple
-                          accept="image/*"
-                        />
-                      </div>
-                      <Button onClick={() => fetchFiles()} disabled={loading} variant="outline" size="sm">
-                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                        Refresh
-                      </Button>
-                    </div>
+          <TabsContent value="media" className="mt-4">
+            <CompactImageGallery onImageSelect={handleImageFromGallery} height="350px" limit={16} />
+          </TabsContent>
 
-                    {uploading && <div className="text-sm text-muted-foreground">Uploading file...</div>}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="url" className="space-y-4 mt-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="image-url">Image URL *</Label>
-                  <Input
-                    id="image-url"
-                    placeholder="https://example.com/image.jpg"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                  />
+          <TabsContent value="upload" className="space-y-4 mt-4">
+            <Card>
+              <CardContent className="space-y-4 pt-6">
+                <div className="space-y-4">
+                  <DragDropUpload onUploadComplete={HandleOnUploadComplete} />
+                  {uploading && <div className="text-sm text-muted-foreground">Uploading file...</div>}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image-alt">Alt Text (for accessibility)</Label>
-                  <Input
-                    id="image-alt"
-                    placeholder="Describe this image"
-                    value={imageAlt}
-                    onChange={(e) => setImageAlt(e.target.value)}
-                  />
-                </div>
-                <Button onClick={insertImageFromUrl} disabled={!imageUrl} className="w-full">
-                  <Link2 className="w-4 h-4 mr-2" />
-                  Insert Image from URL
-                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="url" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="image-url">Image URL *</Label>
+                <Input
+                  id="image-url"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
               </div>
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
+              <div className="space-y-2">
+                <Label htmlFor="image-alt">Alt Text (for accessibility)</Label>
+                <Input
+                  id="image-alt"
+                  placeholder="Describe this image"
+                  value={imageAlt}
+                  onChange={(e) => setImageAlt(e.target.value)}
+                />
+              </div>
+              <Button onClick={insertImageFromUrl} disabled={!imageUrl} className="w-full">
+                <Link2 className="w-4 h-4 mr-2" />
+                Insert Image from URL
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
       </Dialog>
 
       {/* YouTube Dialog */}
