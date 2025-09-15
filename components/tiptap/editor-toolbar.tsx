@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client"
 
 import type React from "react"
@@ -32,7 +34,6 @@ import {
   ListIcon,
   ChevronDown,
   FileText,
-  RefreshCw,
   Unlink,
   ALargeSmall,
   Link2,
@@ -86,8 +87,8 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
   const [youtubeUrl, setYoutubeUrl] = useState("")
 
   // states for Image
-  const [uploading, setUploading] = useState(false)
-  const [loading, setLoading] = useState(false)
+  // const [uploading, setUploading] = useState(false)
+  // const [loading, setLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
   const [imageAlt, setImageAlt] = useState("")
 
@@ -114,8 +115,8 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
   const addOrUpdateLink = () => {
     if (linkUrl) {
       const attributes: any = { href: linkUrl }
-      linkTarget ? attributes.target = "_blank" : attributes.target = null
-      linkNofollow ? attributes.rel = "nofollow" : attributes.rel = null
+      if(linkTarget) attributes.target = "_blank"; else attributes.target = null;
+      if(linkNofollow) attributes.rel = "nofollow"; else attributes.rel = null;
 
       if (isEditingLink) {
         editor.chain().focus().setLink(attributes).run()
@@ -212,11 +213,11 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
     setImageDialog(false)
   }
 
-  const fetchFiles = () => {
-    setLoading(true)
-    console.log("Fetching files...")
-    setTimeout(() => setLoading(false), 1000)
-  }
+  // const fetchFiles = () => {
+  //   setLoading(true)
+  //   console.log("Fetching files...")
+  //   setTimeout(() => setLoading(false), 1000)
+  // }
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 bg-white border-b-2 border-gray-200 overflow-x-auto">
@@ -531,7 +532,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
                   checked={linkTarget}
                   onCheckedChange={(checked) => setLinkTarget(checked as boolean)}
                 />
-                <Label htmlFor="link-target">Open in new tab (target="_blank")</Label>
+                <Label htmlFor="link-target">Open in new tab (target=&lquot;_blank&rquot;)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -539,7 +540,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
                   checked={linkNofollow}
                   onCheckedChange={(checked) => setLinkNofollow(checked as boolean)}
                 />
-                <Label htmlFor="link-nofollow">Add nofollow (rel="nofollow")</Label>
+                <Label htmlFor="link-nofollow">Add nofollow (rel=&lquot;nofollow&rquot;)</Label>
               </div>
             </div>
           </div>
@@ -589,7 +590,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
               <CardContent className="space-y-4 pt-6">
                 <div className="space-y-4">
                   <DragDropUpload onUploadComplete={HandleOnUploadComplete} />
-                  {uploading && <div className="text-sm text-muted-foreground">Uploading file...</div>}
+                  {/* {uploading && <div className="text-sm text-muted-foreground">Uploading file...</div>} */}
                 </div>
               </CardContent>
             </Card>

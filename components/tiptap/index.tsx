@@ -30,7 +30,6 @@ interface TiptapProps {
   placeholder?: string
   className?: string
 }
-const content = "<h1>Welcome to Tiptap Editor</h1>";
 
 
 export default function Tiptap({ content, onChange, placeholder = "Start writing...", className, }: TiptapProps) {

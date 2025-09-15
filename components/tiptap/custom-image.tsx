@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { mergeAttributes } from "@tiptap/core"
 import Image from "@tiptap/extension-image"
 
@@ -6,7 +8,7 @@ export const CustomImage = Image.extend({
 
   addAttributes() {
     return {
-      //@ts-ignore
+      //@ts-expect-error ts(2345) as old
       ...this.parent?.(),
 
       class: {
