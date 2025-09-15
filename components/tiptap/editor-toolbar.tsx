@@ -36,6 +36,7 @@ import {
   Unlink,
   ALargeSmall,
   Link2,
+  Delete,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -98,7 +99,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         setIsEditingLink(true)
         setLinkUrl(href)
         setLinkTarget(target === "_blank")
-        setLinkNofollow(rel === "nofollow")
+        setLinkNofollow(rel?.includes("nofollow") || false)
         setLinkText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to))
       } else {
         setIsEditingLink(false)
@@ -113,8 +114,8 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
   const addOrUpdateLink = () => {
     if (linkUrl) {
       const attributes: any = { href: linkUrl }
-      if (linkTarget) attributes.target = "_blank"
-      if (linkNofollow) attributes.rel = "nofollow"
+      linkTarget ? attributes.target = "_blank" : attributes.target = null
+      linkNofollow ? attributes.rel = "nofollow" : attributes.rel = null
 
       if (isEditingLink) {
         editor.chain().focus().setLink(attributes).run()
@@ -698,6 +699,14 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
               <DropdownMenuItem onClick={() => editor.chain().focus().addRowAfter().run()}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Row After
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => editor.chain().focus().deleteColumn().run()}>
+                <Delete className="w-4 h-4 mr-2" />
+                Delete Column
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => editor.chain().focus().deleteRow().run()}>
+                <Delete className="w-4 h-4 mr-2" />
+                Delete Row
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => editor.chain().focus().deleteTable().run()} className="text-red-600">

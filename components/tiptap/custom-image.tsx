@@ -6,12 +6,13 @@ export const CustomImage = Image.extend({
 
   addAttributes() {
     return {
+      //@ts-ignore
       ...this.parent?.(),
 
       class: {
         default: null,
-        parseHTML: (element) => element.getAttribute("class"),
-        renderHTML: (attributes) => {
+        parseHTML: (element: { getAttribute: (arg0: string) => any }) => element.getAttribute("class"),
+        renderHTML: (attributes: { class: any }) => {
           if (!attributes.class) return {}
           return {
             class: attributes.class,
@@ -21,8 +22,8 @@ export const CustomImage = Image.extend({
 
       style: {
         default: null,
-        parseHTML: (element) => element.getAttribute("style"),
-        renderHTML: (attributes) => {
+        parseHTML: (element: { getAttribute: (arg0: string) => any }) => element.getAttribute("style"),
+        renderHTML: (attributes: { style: any }) => {
           if (!attributes.style) return {}
           return {
             style: attributes.style,
@@ -32,8 +33,8 @@ export const CustomImage = Image.extend({
 
       width: {
         default: null,
-        parseHTML: (element) => element.getAttribute("width"),
-        renderHTML: (attributes) => {
+        parseHTML: (element: { getAttribute: (arg0: string) => any }) => element.getAttribute("width"),
+        renderHTML: (attributes: { width: any }) => {
           if (!attributes.width) return {}
           return {
             width: attributes.width,
@@ -43,8 +44,8 @@ export const CustomImage = Image.extend({
 
       height: {
         default: null,
-        parseHTML: (element) => element.getAttribute("height"),
-        renderHTML: (attributes) => {
+        parseHTML: (element: { getAttribute: (arg0: string) => any }) => element.getAttribute("height"),
+        renderHTML: (attributes: { height: any }) => {
           if (!attributes.height) return {}
           return {
             height: attributes.height,
@@ -54,8 +55,8 @@ export const CustomImage = Image.extend({
 
       title: {
         default: null,
-        parseHTML: (element) => element.getAttribute("title"),
-        renderHTML: (attributes) => {
+        parseHTML: (element: { getAttribute: (arg0: string) => any }) => element.getAttribute("title"),
+        renderHTML: (attributes: { title: any }) => {
           if (!attributes.title) return {}
           return {
             title: attributes.title,
@@ -65,7 +66,7 @@ export const CustomImage = Image.extend({
     }
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes : { ...HTMLAttributes } }) {
     return ["img", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)]
   },
 })

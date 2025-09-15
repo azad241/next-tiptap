@@ -7,18 +7,17 @@ import StarterKit from "@tiptap/starter-kit"
 import Paragraph from "@tiptap/extension-paragraph"
 import TextAlign from "@tiptap/extension-text-align"
 import Highlight from "@tiptap/extension-highlight"
-import TextStyle from "@tiptap/extension-text-style"
+import { TextStyle } from "@tiptap/extension-text-style"
 import Color from "@tiptap/extension-color"
 import Subscript from "@tiptap/extension-subscript"
 import Superscript from "@tiptap/extension-superscript"
-import Table from "@tiptap/extension-table"
+import { Table } from "@tiptap/extension-table"
 import TableRow from "@tiptap/extension-table-row"
 import TableHeader from "@tiptap/extension-table-header"
 import TableCell from "@tiptap/extension-table-cell"
 import Link from "@tiptap/extension-link"
 import Blockquote from "@tiptap/extension-blockquote"
 import Youtube from "@tiptap/extension-youtube"
-
 import { CustomImage } from "./custom-image"
 import EditorToolbar from "./editor-toolbar"
 import EditorFooter from "./editor-footer"
@@ -37,6 +36,7 @@ const content = "<h1>Welcome to Tiptap Editor</h1>";
 export default function Tiptap({ content, onChange, placeholder = "Start writing...", className, }: TiptapProps) {
   const [showHtmlViewer, setShowHtmlViewer] = useState(false);
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         bulletList: {
@@ -72,16 +72,17 @@ export default function Tiptap({ content, onChange, placeholder = "Start writing
       Color,
       Subscript,
       Superscript,
+      TableRow,
+      
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: "border border-gray-300 bg-gray-50 font-bold p-2",
+        },
+      }),
       Table.configure({
         resizable: true,
         HTMLAttributes: {
           class: "border-collapse border border-gray-300 my-4 mx-auto",
-        },
-      }),
-      TableRow,
-      TableHeader.configure({
-        HTMLAttributes: {
-          class: "border border-gray-300 bg-gray-50 font-bold p-2",
         },
       }),
       TableCell.configure({
@@ -91,8 +92,11 @@ export default function Tiptap({ content, onChange, placeholder = "Start writing
       }),
       Link.configure({
         openOnClick: false,
+        enableClickSelection: true,
         HTMLAttributes: {
           class: "text-blue-600 underline cursor-pointer",
+          rel: null,
+          target: null,
         },
       }),
       // Use CustomImage instead of regular Image
