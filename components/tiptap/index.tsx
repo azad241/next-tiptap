@@ -11,11 +11,7 @@ import { TextStyle } from "@tiptap/extension-text-style"
 import Color from "@tiptap/extension-color"
 import Subscript from "@tiptap/extension-subscript"
 import Superscript from "@tiptap/extension-superscript"
-import { Table } from "@tiptap/extension-table"
-import TableRow from "@tiptap/extension-table-row"
-import TableHeader from "@tiptap/extension-table-header"
-import TableCell from "@tiptap/extension-table-cell"
-import Link from "@tiptap/extension-link"
+import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table"
 import Blockquote from "@tiptap/extension-blockquote"
 import Youtube from "@tiptap/extension-youtube"
 import { CustomImage } from "./custom-image"
@@ -38,6 +34,15 @@ export default function Tiptap({ content, onChange, placeholder = "Start writing
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
+        link : {
+        openOnClick: false,
+        enableClickSelection: true,
+        HTMLAttributes: {
+          class: "text-blue-600 underline cursor-pointer",
+          rel: null,
+          target: null,
+        },
+      },
         bulletList: {
           HTMLAttributes: { class: "list-disc list-outside ml-6 my-2" },
         },
@@ -87,15 +92,6 @@ export default function Tiptap({ content, onChange, placeholder = "Start writing
       TableCell.configure({
         HTMLAttributes: {
           class: "border border-gray-300 p-2",
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-        enableClickSelection: true,
-        HTMLAttributes: {
-          class: "text-blue-600 underline cursor-pointer",
-          rel: null,
-          target: null,
         },
       }),
       // Use CustomImage instead of regular Image
